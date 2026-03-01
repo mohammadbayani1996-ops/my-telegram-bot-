@@ -1,7 +1,7 @@
 import telebot
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
 
-TOKEN = "توکن_رباتت_اینجا"
+TOKEN = "8116941143:AAEHkiezjL6Pht3ZmM0g8kQKmCdT_NJjcfE"
 
 CHANNELS = [
     "@Sateki_khosh2",
