@@ -1,10 +1,8 @@
 import telebot
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
 
-# توکن رباتت
-TOKEN = "8116941143:AAEHkiezjL6Pht3ZmM0g8kQKmCdT_NJjcfE"
+TOKEN = "توکن_رباتت_اینجا"
 
-# لیست کانال‌ها
 CHANNELS = [
     "@Sateki_khosh2",
     "@Sateki_khosh22",
@@ -12,18 +10,21 @@ CHANNELS = [
     "@nesteq_beserhati"
 ]
 
-# FILE_ID رو بعد از گرفتن آهنگ از ربات، اینجا جایگزین کن
-FILE_ID = "AgADlx8AArW8sVA"
-
-# ساخت ربات
 bot = telebot.TeleBot(TOKEN)
 
-# ======= Handler برای گرفتن FILE_ID جدید =======
-@bot.message_handler(content_types=['audio'])
-def get_file_id(message):
-    bot.reply_to(message, f"File ID: {message.audio.file_id}")
+# اینجا آخرین آهنگ ذخیره میشه
+last_file_id = None
 
-# ======= چک کردن عضویت کاربر در کانال‌ها =======
+
+# 🔥 وقتی خودت آهنگ بفرستی ذخیره میشه
+@bot.message_handler(content_types=['audio'])
+def save_audio(message):
+    global last_file_id
+    last_file_id = message.audio.file_id
+    bot.reply_to(message, "✅ آهنگ ذخیره شد و آماده پخش است!")
+
+
+# چک عضویت
 def check_join(user_id):
     for channel in CHANNELS:
         try:
@@ -34,39 +35,51 @@ def check_join(user_id):
             return False
     return True
 
-# ======= دستور /start =======
+
+# دستور استارت
 @bot.message_handler(commands=['start'])
 def start(message):
+    global last_file_id
+
+    if not last_file_id:
+        bot.send_message(message.chat.id, "❌ هنوز آهنگی تنظیم نشده.")
+        return
+
     if check_join(message.from_user.id):
-        bot.send_audio(message.chat.id, FILE_ID, caption="🎵 دانلود آهنگ آماده است!")
+        bot.send_audio(message.chat.id, last_file_id, caption="🎵 دانلود آهنگ آماده است!")
     else:
         markup = InlineKeyboardMarkup()
         for channel in CHANNELS:
-            join_btn = InlineKeyboardButton(
-                f"📢 عضویت در {channel}",
-                url=f"https://t.me/{channel.replace('@','')}"
+            markup.add(
+                InlineKeyboardButton(
+                    f"📢 عضویت در {channel}",
+                    url=f"https://t.me/{channel.replace('@','')}"
+                )
             )
-            markup.add(join_btn)
-        check_btn = InlineKeyboardButton("🔄 بررسی عضویت", callback_data="check")
-        markup.add(check_btn)
+        markup.add(
+            InlineKeyboardButton("🔄 بررسی عضویت", callback_data="check")
+        )
+
         bot.send_message(
             message.chat.id,
             "❌ اول عضو همه کانال‌ها شو بعد بررسی کن.",
             reply_markup=markup
         )
 
-# ======= بررسی دوباره عضویت بعد از کلیک =======
+
 @bot.callback_query_handler(func=lambda call: call.data == "check")
 def check(call):
+    global last_file_id
+
     if check_join(call.from_user.id):
         bot.edit_message_text(
             "✅ تایید شد! در حال ارسال آهنگ...",
             call.message.chat.id,
             call.message.message_id
         )
-        bot.send_audio(call.message.chat.id, FILE_ID, caption="🎵 دانلود آهنگ آماده است!")
+        bot.send_audio(call.message.chat.id, last_file_id, caption="🎵 دانلود آهنگ آماده است!")
     else:
         bot.answer_callback_query(call.id, "هنوز عضو همه کانال‌ها نشدی!")
 
-# ======= Polling =======
+
 bot.infinity_polling()
