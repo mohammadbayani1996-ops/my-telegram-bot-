@@ -16,14 +16,25 @@ bot = telebot.TeleBot(TOKEN)
 last_file_id = None
 
 
-# 🔥 وقتی خودت آهنگ بفرستی ذخیره میشه
-@bot.message_handler(content_types=['audio'])
-def save_audio(message):
-    global last_file_id
-    last_file_id = message.audio.file_id
-    bot.reply_to(message, "✅ آهنگ ذخیره شد و آماده پخش است!")
+from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
 
+@bot.message_handler(commands=['start'])
+def start(message):
 
+    markup = InlineKeyboardMarkup()
+
+    btn = InlineKeyboardButton(
+        "📥 دانلود آهنگ",
+        url="https://t.me/Sateki_khosh2Bot?start=music1"
+    )
+
+    markup.add(btn)
+
+    bot.send_message(
+        message.chat.id,
+        "برای دانلود روی دکمه بزن 👇",
+        reply_markup=markup
+    )
 # چک عضویت
 def check_join(user_id):
     for channel in CHANNELS:
